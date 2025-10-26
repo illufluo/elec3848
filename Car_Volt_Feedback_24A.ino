@@ -3,6 +3,19 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+
+//ultrasound
+unsigned long start_time = 0;
+int done = 1;
+long distance_in_cm1;
+long distance_in_cm2;
+#define echoPin1 11
+#define trigPin1 12
+#define echoPin2 11
+#define trigPin2 12
+
+//
+
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
 
@@ -75,6 +88,8 @@ int MIN_VALUE = 300;
 //PWM Definition
 #define MAX_PWM   2000
 #define MIN_PWM   300
+
+#define TESTMODE true
 
 int Motor_PWM = 1900;
 
@@ -324,6 +339,12 @@ void sendVolt(){
 //Where the program starts
 void setup()
 {
+  //ultrasonic
+  pinMode(echoPin1, INPUT);
+  pinMode(trigPin1, OUTPUT);
+  pinMode(echoPin2, INPUT);
+  pinMode(trigPin2, OUTPUT);
+ //
   SERIAL.begin(115200); // USB serial setup
   SERIAL.println("Start");
   STOP(); // Stop the robot
@@ -355,8 +376,11 @@ void loop()
   if (millis() > (time + 15)) {
     voltCount++;
     time = millis();
-    UART_Control(); //get USB and BT serial data
-
+    if (TESTMODE){
+      ultrasonic_move();
+    }else{
+      UART_Control(); //get USB and BT serial data
+    }
     //constrain the servo movement
     pan = constrain(pan, servo_min, servo_max);
     tilt = constrain(tilt, servo_min, servo_max);
@@ -368,4 +392,61 @@ void loop()
     voltCount=0;
     sendVolt();
   }
+}
+//ultrasonic
+void measure_distance() {
+  long duration1,duration2;
+
+  
+  if (done) {     
+    // reset start_time only if the distance has been measured 
+    // in the last invocation of the method
+    done = 0;
+    start_time = millis();
+    digitalWrite(trigPin1, LOW);
+    digitalWrite(trigPin2, LOW);
+  }
+  
+  if (millis() > start_time + 2) { 
+    digitalWrite(trigPin1, HIGH);
+    digitalWrite(trigPin2, HIGH);
+  }
+  
+  if (millis() > start_time + 10) {
+    digitalWrite(trigPin1, LOW);
+    digitalWrite(trigPin2, LOW);
+    duration1 = pulseIn(echoPin1, HIGH);
+    duration2 = pulseIn(echoPin2, HIGH);
+    distance_in_cm1 = (duration1 / 2.0) / 29.1;
+    distance_in_cm2 = (duration2 / 2.0) / 29.1;
+    done = 1;
+  }
+  
+}
+//required function:finetune mode
+void ultrasonic_move(){
+  measure_distance();
+  if(distance_in_cm1<8&&distance_in_cm2<8){
+    //too close
+    BACK(500,500,500,500);
+    return;
+  }
+  if(distance_in_cm1<=8||distance_in_cm2<=8){
+    if(distance_in_cm1<distance_in_cm2){
+      rotate_2();
+    }else if (distance_in_cm1>distance_in_cm2){
+      rotate_1();
+    }else{
+      //correct spot
+      STOP();
+    }
+  }else{
+    //wall not found
+    ADVANCE();
+    return;
+  }
+}
+//reuired function:find light
+void lightseek(){
+  //not implemented
 }
