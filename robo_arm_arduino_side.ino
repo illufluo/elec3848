@@ -5,8 +5,9 @@ Potentiometer controlled servo
 
 
 #define default2 95
+#define away2 40
 #define default3 35
-#define rise4 135
+#define rise4 140
 #define drop4 80
 
 #define release5 90
@@ -52,7 +53,10 @@ void loop() {
     clip();
     delay(1000);
     rise();
+    delay(1000);
+    away();
   }else{
+    back();
     release(); 
   }
   }
@@ -78,6 +82,20 @@ void clip(){
 void rise(){
   while(pos4<rise4){
     pos4+=1;
+    writeall();
+    delay(10);
+  }
+}
+void away(){
+  while(pos2>away2){
+    pos2-=1;
+    writeall();
+    delay(10);
+  }
+}
+void back(){
+  while(pos2<default2){
+    pos2+=1;
     writeall();
     delay(10);
   }
