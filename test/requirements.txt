@@ -1,0 +1,12 @@
+# Core dependencies for Raspberry Pi 5 Color Block Transport Robot
+
+# Computer Vision
+opencv-python==4.8.1.78
+numpy==1.24.3
+
+# Serial Communication with Arduino
+pyserial==3.5
+
+# System utilities (optional)
+# Pillow==10.1.0
+
